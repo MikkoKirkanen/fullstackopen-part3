@@ -1,0 +1,44 @@
+.notification-container {
+  max-height: 0;
+  transition: max-height 0.5s ease-in-out;
+  overflow: hidden;
+}
+
+.notification-container.show {
+  max-height: 160px;
+}
+
+.notification {
+  display: inline-block;
+  font-size: 24px;
+  font-weight: bold;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  border-radius: 8px;
+  border-width: 1px;
+  border-style: solid;
+}
+
+.primary {
+  color: #052c65;
+  background-color: #cfe2ff;
+  border-color: #9ec5fe;
+}
+
+.success {
+  color: #0a3622;
+  background-color: #d1e7dd;
+  border-color: #a3cfbb;
+}
+
+.danger {
+  color: #58151c;
+  background-color: #f8d7da;
+  border-color: #f1aeb5;
+}
+
+.info {
+  color: #055160;
+  background-color: #cff4fc;
+  border-color: #9eeaf9;
+}
