@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const dbUrl = "/api/persons";
+const dbUrl = "https://fullstackopen-part3-nv2c.onrender.com/";
 
 const getAll = () => {
   return axios.get(dbUrl).then(response => response.data);
