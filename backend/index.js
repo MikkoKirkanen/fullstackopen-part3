@@ -45,7 +45,7 @@ let persons = [
 
 // Get last id and let it be changeable
 let lastId = persons.length
-  ? Math.max(...persons.map((person) => Number(person.id)))
+  ? Math.max(...persons?.map((person) => Number(person.id)))
   : 0;
 
 app.get('/', (_request, response) => {

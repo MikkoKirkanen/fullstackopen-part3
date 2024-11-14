@@ -30,7 +30,7 @@ const App = () => {
   }, []);
 
   const initNextId = (data) => {
-    setNextId(Math.max(...data.map((person) => person.id)) + 1);
+    setNextId(Math.max(...data?.map((person) => person.id)) + 1);
   };
 
   const regexp = new RegExp(filter, "i");
@@ -71,7 +71,7 @@ const App = () => {
         .update(personObj)
         .then((data) => {
           setPersons(
-            persons.map((person) => (person.id !== data.id ? person : data))
+            persons?.map((person) => (person.id !== data.id ? person : data))
           );
           showNotification(`${data.name} has been updated`, "primary");
           setIsEditMode(false);

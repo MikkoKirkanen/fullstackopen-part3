@@ -1,7 +1,7 @@
 const Persons = ({ personsToShow, remove, edit }) => (
   <table>
     <tbody>
-      {personsToShow.map((person) => (
+      {personsToShow?.map((person) => (
         <tr key={person.id}>
           <td>{person.name}</td>
           <td>{person.number}</td>
