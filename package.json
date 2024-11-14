@@ -1,0 +1,21 @@
+{
+  "name": "fullstackopen-part3",
+  "version": "0.1.0",
+  "description": "Fullstackopen studies part 3",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "nodemon index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Mikko Kirkanen",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.21.1",
+    "morgan": "^1.10.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.7"
+  }
+}
