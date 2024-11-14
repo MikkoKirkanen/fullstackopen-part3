@@ -26,6 +26,7 @@ const App = () => {
       .then((data) => {
         setPersons(data);
         initNextId(data);
+        setPersonsToShow(data);
       })
       .catch((error) => {
         console.error(`${error.message}: Did you remember to start server?`);
@@ -40,7 +41,7 @@ const App = () => {
   const filterPersons = (value) => {
     const regexp = new RegExp(value, 'i');
     setPersonsToShow(
-      filter === ''
+      value === ''
         ? persons
         : persons.filter((person) => regexp.test(person.name))
     );
