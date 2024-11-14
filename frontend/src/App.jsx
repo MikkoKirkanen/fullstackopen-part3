@@ -16,7 +16,6 @@ const App = () => {
   const [timeoutId, setTimeoutId] = useState(null);
   const [showMessage, setShowMessage] = useState(false);
   const [nextId, setNextId] = useState(null);
-  const [personsToShow, setPersonsToShow] = useState([]);
 
   // Remember to run server in terminal: npm run server
   // React Hook useEffect
@@ -26,7 +25,6 @@ const App = () => {
       .then((data) => {
         setPersons(data);
         initNextId(data);
-        setPersonsToShow(data);
       })
       .catch((error) => {
         console.error(`${error.message}: Did you remember to start server?`);
@@ -38,14 +36,11 @@ const App = () => {
     setNextId(Math.max(...data.map((person) => person.id)) + 1);
   };
 
-  const filterPersons = (value) => {
-    const regexp = new RegExp(value, 'i');
-    setPersonsToShow(
-      value === ''
-        ? persons
-        : persons.filter((person) => regexp.test(person.name))
-    );
-  };
+  const regexp = new RegExp(filter, 'i');
+  const personsToShow =
+    filter === ''
+      ? persons
+      : persons.filter((person) => regexp.test(person.name));
 
   const handleFilterChange = (event) => {
     const value = event.target.value;
