@@ -35,9 +35,9 @@ const App = () => {
 
   const regexp = new RegExp(filter, "i");
   const personsToShow =
-    filter === ""
+    (filter === ""
       ? persons
-      : persons.filter((person) => regexp.test(person.name));
+      : persons.filter((person) => regexp.test(person.name))) || [];
 
   const handleFilterChange = (event) => {
     setFilter(event.target.value);
