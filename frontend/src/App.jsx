@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react';
+import 'bootstrap/dist/css/bootstrap.min.css';
+import './index.css';
+import personsService from './services/persons';
 import Filter from './components/Filter';
 import PersonForm from './components/PersonForm';
 import Persons from './components/Persons';
-import personsService from './services/persons';
-import './index.css';
+import Notification from './components/Notification';
 
 const App = () => {
   const [persons, setPersons] = useState([]);
@@ -12,10 +14,13 @@ const App = () => {
   const [newNumber, setNewNumber] = useState('');
   const [personId, setPersonId] = useState(null);
   const [isEditMode, setIsEditMode] = useState(false);
-  const [notification, setNotification] = useState({ message: '', type: '' });
+  const [notification, setNotification] = useState({
+    message: '',
+    errorMessages: [],
+    type: '',
+  });
   const [timeoutId, setTimeoutId] = useState(null);
   const [showMessage, setShowMessage] = useState(false);
-  const [nextId, setNextId] = useState(null);
 
   // Remember to run server in terminal: npm run server
   // React Hook useEffect
@@ -24,17 +29,12 @@ const App = () => {
       .getAll()
       .then((data) => {
         setPersons(data);
-        initNextId(data);
       })
       .catch((error) => {
         console.error(`${error.message}: Did you remember to start server?`);
         console.warn('Run in terminal: npm run server');
       });
   }, []);
-
-  const initNextId = (data) => {
-    setNextId(Math.max(...data.map((person) => person.id)) + 1);
-  };
 
   const regexp = new RegExp(filter, 'i');
   const personsToShow =
@@ -62,68 +62,42 @@ const App = () => {
    */
   const add = (event) => {
     event.preventDefault();
-    if (hasInvalidData()) {
-      return;
-    }
-    const id = isEditMode ? personId : nextId.toString();
     const personObj = {
       name: newName,
       number: newNumber,
-      id: id,
     };
     if (isEditMode) {
+      personObj.id = personId;
       personsService
         .update(personObj)
         .then((data) => {
           setPersons(
-            persons.map((person) => (person.id !== data.id ? person : data))
+            persons.map((person) =>
+              person.id !== data.person.id ? person : data.person
+            )
           );
-          showNotification(`${data.name} has been updated`, 'primary');
+          showNotification(data, 'primary');
           setIsEditMode(false);
           clear();
         })
-        .catch(() => {
-          showNotification(
-            `Information of ${personObj.name} has not found`,
-            'danger'
-          );
-          setIsEditMode(false);
+        .catch((error) => {
+          console.log('error', error);
+          showNotification(error.response.data, 'danger');
           // Clean up a person not found in the list
-          updatePersons(personObj);
-          clear();
+          // updatePersons(personObj);
         });
     } else {
-      personsService.create(personObj).then((data) => {
-        setPersons(persons.concat(data));
-        showNotification(`Added ${data.name}`, 'success');
-        setNextId(nextId + 1);
-        clear();
-      });
+      personsService
+        .create(personObj)
+        .then((data) => {
+          setPersons(persons.concat(data.person));
+          showNotification(data, 'success');
+          clear();
+        })
+        .catch((error) => {
+          showNotification(error.response.data, 'danger');
+        });
     }
-  };
-
-  /**
-   * Checks the validity of data.
-   * @returns {boolean} `false` if data is valid, `true` if data is invalid.
-   */
-  const hasInvalidData = () => {
-    const type = 'danger';
-    if (newName === '') {
-      showNotification('Name is empty! Add name, please.', type);
-      return true;
-    }
-    if (persons.some((person) => person.name === newName && !isEditMode)) {
-      showNotification(`${newName} is already added to phonebook`, type);
-      return true;
-    }
-    if (newNumber === '') {
-      showNotification(
-        `Number is empty! Add ${newName}'s number, please.`,
-        type
-      );
-      return true;
-    }
-    return false;
   };
 
   const edit = (person) => {
@@ -141,14 +115,23 @@ const App = () => {
   const clear = () => {
     setNewName('');
     setNewNumber('');
+    setPersonId(null);
   };
 
   const remove = (person) => {
     if (confirm(`Delete ${person.name}?`)) {
-      personsService.remove(person.id).then((person) => {
-        showNotification(`${person.name} has been deleted`, 'info');
-        updatePersons(person);
-      });
+      personsService
+        .remove(person.id)
+        .then((data) => {
+          showNotification(data, 'info');
+          updatePersons(person);
+        })
+        .catch((error) => {
+          if (error.status === 404) {
+            showNotification(error.response.data, 'danger');
+            updatePersons(person);
+          }
+        });
     }
   };
 
@@ -157,12 +140,16 @@ const App = () => {
     setPersons(updatedPersons);
   };
 
-  const showNotification = (text, type) => {
+  const showNotification = (data, type) => {
     if (timeoutId) {
       clearTimeout(timeoutId);
     }
 
-    setNotification({ message: text, type: type });
+    setNotification({
+      message: data.message,
+      messages: data.messages,
+      type: type,
+    });
     setShowMessage(true);
 
     const newTimeoutId = setTimeout(() => {
@@ -172,12 +159,13 @@ const App = () => {
   };
 
   return (
-    <div>
-      <h2>Phonebook</h2>
+    <div className='container'>
+      <h1>Phonebook</h1>
       <div className={`notification-container ${showMessage ? 'show' : ''}`}>
-        <div className={`notification ${notification.type}`}>
+        <Notification notification={notification} />
+        {/* <div className={`notification ${notification.type}`}>
           {notification.message}
-        </div>
+        </div> */}
       </div>
       <Filter filter={filter} onFilterChange={handleFilterChange} />
 

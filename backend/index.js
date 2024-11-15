@@ -13,7 +13,7 @@ morgan.token('req-json', (req) => {
   return JSON.stringify(req.body);
 });
 app.use(cors());
-app.use(express.static('dist'))
+app.use(express.static('dist'));
 
 let persons = [
   {
@@ -48,6 +48,31 @@ let lastId = persons.length
   ? Math.max(...persons?.map((person) => Number(person.id)))
   : 0;
 
+const trimValues = (person) => {
+  person.name = person.name.trim();
+  person.number = person.number.trim();
+};
+
+const hasEmptyOrSameNameValues = (person) => {
+  trimValues(person);
+  const result = { hasErrors: false, messages: [] };
+  const noName = !person.name;
+  const noNumber = !person.number;
+  result.hasErrors = noName || noNumber;
+  if (result.hasErrors) {
+    noName ? result.messages.push('Name is required') : null;
+    noNumber ? result.messages.push('Number is required') : null;
+  } else if (
+    persons
+      .filter((p) => p.id !== person?.id)
+      .some((p) => p.name === person?.name)
+  ) {
+    result.messages.push(`${person.name} is already in the phonebook`);
+    result.hasErrors = true;
+  }
+  return result;
+};
+
 app.get('/', (_request, response) => {
   response.send(`<h1>Hello World!</h1>`);
 });
@@ -67,34 +92,59 @@ app.get('/api/persons/:id', (request, response) => {
   result ? response.json(result) : response.sendStatus(404);
 });
 
-app.delete('/api/persons/:id', (request, response) => {
-  persons = persons.filter((person) => person.id !== request.params.id);
-  response.sendStatus(204);
+app.delete('/api/persons/:id', (req, res) => {
+  const id = req.params.id;
+  const person = persons.find(p => p.id === id)
+  if (!person) {
+    res.status(404).json({
+      message: 'Person not found in phonebook',
+      messages: ['The person is removed from the phonebook.']
+    });
+    return;
+  }
+  persons = persons.filter((person) => person.id !== id);
+  res.status(200).json({
+      message: `${person.name} has been removed from the phonebook`,
+  });
 });
 
-app.post('/api/persons', (request, response) => {
-  const person = { ...request.body };
-  const isOnList = persons.some((p) => p.name === person?.name);
-  if (!person?.name || !person?.number || isOnList) {
-    let error = '';
-    if (!person?.name) {
-      error = 'Name is empty';
-    } else if (!person?.number) {
-      error = 'Number is empty';
-    } else if (!person?.isOnList) {
-      error = 'The person is already in the phonebook';
-    }
-    response.status(400).json({
-      error: error,
+app.post('/api/persons', (req, res) => {
+  const person = { ...req.body };
+  const errors = hasEmptyOrSameNameValues(person);
+  if (errors.hasErrors) {
+    res.status(400).json({
+      message: 'Failed to add person to phonebook',
+      messages: errors.messages,
     });
     return;
   }
   // Increase lastId before adding it to id and convert that to string
   person.id = (++lastId).toString();
-  // No good way because might cause conflicts
+  // Not good way because might cause conflicts
   // person.id = (Math.floor(Math.random() * 10000)).toString();
   persons.push(person);
-  response.json(person);
+  res.status(200).json({
+    message: `${person.name} has been successfully added to the phonebook`,
+    person: person});
+});
+
+app.put('/api/persons', (req, res) => {
+  const newData = req.body;
+  const errors = hasEmptyOrSameNameValues(newData);
+  if (errors.hasErrors) {
+    res.status(400).json({
+      message: 'Person update failed',
+      messages: errors.messages,
+    });
+    return;
+  }
+  const person = persons.find((person) => person.id === newData.id);
+  person.name = newData.name;
+  person.number = newData.number;
+  res.status(200).json({
+    message: `${person.name} has been updated successfully`,
+    person: person,
+  });
 });
 
 const PORT = process.env.PORT || 3001;

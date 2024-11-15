@@ -1,7 +1,7 @@
 const Filter = (props) => {
   return (
-    <div>
-      Filter by name: <input value={props.filter} onChange={props.onFilterChange} />
+    <div className="filter-container mb-3">
+      <label htmlFor="filter">Filter by name</label> <input id="filter" className="form-control" value={props.filter} onChange={props.onFilterChange} />
     </div>
   );
 };

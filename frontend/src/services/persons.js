@@ -1,6 +1,7 @@
 import axios from "axios";
 
-const dbUrl = "https://fullstackopen-part3-nv2c.onrender.com/api/persons";
+const dbUrl = "http://localhost:3001/api/persons";
+// const dbUrl = "https://fullstackopen-part3-nv2c.onrender.com/api/persons";
 
 const getAll = () => {
   return axios.get(dbUrl).then(response => response.data);
@@ -15,7 +16,7 @@ const remove = (id) => {
 };
 
 const update = (updateObject) => {
-  return axios.put(`${dbUrl}/${updateObject.id}`, updateObject).then(response => response.data);
+  return axios.put(dbUrl, updateObject).then(response => response.data);
 };
 
 export default {
