@@ -22,7 +22,7 @@ const App = () => {
   const [timeoutId, setTimeoutId] = useState(null);
   const [showMessage, setShowMessage] = useState(false);
 
-  // Remember to run server in terminal: npm run server
+  // Remember to run server in terminal: npm start
   // React Hook useEffect
   useEffect(() => {
     personsService
@@ -31,7 +31,17 @@ const App = () => {
         setPersons(data.persons);
       })
       .catch((error) => {
-        showNotification(error.response.data, 'danger');
+        const data = error.response?.data || error;
+        if (
+          error.code === 'ERR_NETWORK' &&
+          error.config?.url?.includes('localhost')
+        ) {
+          data.messages = [
+            'Is server running?',
+            'Run `npm start` on backend folder',
+          ];
+        }
+        showNotification(data, 'danger', false);
       });
   }, []);
 
@@ -139,7 +149,7 @@ const App = () => {
     setPersons(updatedPersons);
   };
 
-  const showNotification = (data, type) => {
+  const showNotification = (data, type, hasTimeout = true) => {
     if (timeoutId) {
       clearTimeout(timeoutId);
     }
@@ -151,10 +161,12 @@ const App = () => {
     });
     setShowMessage(true);
 
-    const newTimeoutId = setTimeout(() => {
-      setShowMessage(false);
-    }, 5000);
-    setTimeoutId(newTimeoutId);
+    if (hasTimeout) {
+      const newTimeoutId = setTimeout(() => {
+        setShowMessage(false);
+      }, 5000);
+      setTimeoutId(newTimeoutId);
+    }
   };
 
   return (
@@ -177,7 +189,12 @@ const App = () => {
       />
       <h3>Numbers</h3>
       {personsToShow?.length ? (
-        <Persons personsToShow={personsToShow} remove={remove} edit={edit} />
+        <Persons
+          personsToShow={personsToShow}
+          personId={personId}
+          remove={remove}
+          edit={edit}
+        />
       ) : (
         <div>No persons to show</div>
       )}

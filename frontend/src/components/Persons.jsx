@@ -1,10 +1,10 @@
 import Table from 'react-bootstrap/Table';
 
-const Persons = ({ personsToShow, remove, edit }) => (
+const Persons = ({ personsToShow, personId, remove, edit }) => (
   <Table striped size="sm">
     <tbody>
       {personsToShow?.map((person) => (
-        <tr key={person.id}>
+        <tr key={person.id} className={person.id === personId ? "table-primary": null}>
           <td className="align-middle">{person.name}</td>
           <td className="align-middle">{person.number}</td>
           <td className="text-end">
