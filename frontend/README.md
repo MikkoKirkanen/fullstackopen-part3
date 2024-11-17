@@ -9,4 +9,4 @@ Currently, two official plugins are available:
 
 ## Frontend
 
-https://fullstackopen-part3-1-7do2.onrender.com/
+https://fullstackopen-part3-nv2c.onrender.com/

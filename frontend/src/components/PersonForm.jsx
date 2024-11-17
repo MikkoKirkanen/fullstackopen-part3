@@ -1,3 +1,5 @@
+import Table from 'react-bootstrap/Table';
+
 const PersonForm = ({
   submit,
   name,
@@ -8,7 +10,7 @@ const PersonForm = ({
   cancel,
 }) => (
   <form onSubmit={submit}>
-    <table className='person-input-table table table-borderless table-sm'>
+    <Table className='person-input-table' borderless size='sm'>
       <tbody>
         <tr>
           <td className='align-middle w-auto'>
@@ -19,7 +21,7 @@ const PersonForm = ({
               id='name'
               name='name'
               className='form-control'
-              autoComplete="off"
+              autoComplete='off'
               value={name}
               onChange={onNameChange}
             />
@@ -34,7 +36,7 @@ const PersonForm = ({
               id='number'
               name='number'
               className='form-control'
-              autoComplete="off"
+              autoComplete='off'
               value={number}
               onChange={onNumberChange}
             />
@@ -60,7 +62,7 @@ const PersonForm = ({
           </td>
         </tr>
       </tbody>
-    </table>
+    </Table>
   </form>
 );
 

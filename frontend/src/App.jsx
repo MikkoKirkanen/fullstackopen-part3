@@ -28,24 +28,21 @@ const App = () => {
     personsService
       .getAll()
       .then((data) => {
-        setPersons(data);
+        setPersons(data.persons);
       })
       .catch((error) => {
-        console.error(`${error.message}: Did you remember to start server?`);
-        console.warn('Run in terminal: npm run server');
+        showNotification(error.response.data, 'danger');
       });
   }, []);
 
   const regexp = new RegExp(filter, 'i');
-  const personsToShow =
-    filter === ''
-      ? persons
-      : persons.filter((person) => regexp.test(person.name));
+  const personsToShow = !filter
+    ? persons
+    : persons.filter((person) => regexp.test(person.name));
 
   const handleFilterChange = (event) => {
     const value = event.target.value;
     setFilter(value);
-    filterPersons(value);
   };
 
   const handleNameChange = (event) => {
@@ -77,14 +74,15 @@ const App = () => {
             )
           );
           showNotification(data, 'primary');
-          setIsEditMode(false);
           clear();
         })
         .catch((error) => {
-          console.log('error', error);
           showNotification(error.response.data, 'danger');
-          // Clean up a person not found in the list
-          // updatePersons(personObj);
+          // If 404 then remove person and clear inputs
+          if (error.response.status === 404) {
+            removePerson(personObj);
+            clear();
+          }
         });
     } else {
       personsService
@@ -108,7 +106,6 @@ const App = () => {
   };
 
   const cancel = () => {
-    setIsEditMode(false);
     clear();
   };
 
@@ -116,6 +113,8 @@ const App = () => {
     setNewName('');
     setNewNumber('');
     setPersonId(null);
+    // Set edit mode always to false on clear
+    setIsEditMode(false);
   };
 
   const remove = (person) => {
@@ -124,18 +123,18 @@ const App = () => {
         .remove(person.id)
         .then((data) => {
           showNotification(data, 'info');
-          updatePersons(person);
+          removePerson(data.person);
         })
         .catch((error) => {
           if (error.status === 404) {
             showNotification(error.response.data, 'danger');
-            updatePersons(person);
+            removePerson(person);
           }
         });
     }
   };
 
-  const updatePersons = (person) => {
+  const removePerson = (person) => {
     const updatedPersons = persons.filter((p) => p.id !== person.id);
     setPersons(updatedPersons);
   };
@@ -163,9 +162,6 @@ const App = () => {
       <h1>Phonebook</h1>
       <div className={`notification-container ${showMessage ? 'show' : ''}`}>
         <Notification notification={notification} />
-        {/* <div className={`notification ${notification.type}`}>
-          {notification.message}
-        </div> */}
       </div>
       <Filter filter={filter} onFilterChange={handleFilterChange} />
 
@@ -180,7 +176,11 @@ const App = () => {
         cancel={cancel}
       />
       <h3>Numbers</h3>
-      <Persons personsToShow={personsToShow} remove={remove} edit={edit} />
+      {personsToShow?.length ? (
+        <Persons personsToShow={personsToShow} remove={remove} edit={edit} />
+      ) : (
+        <div>No persons to show</div>
+      )}
     </div>
   );
 };

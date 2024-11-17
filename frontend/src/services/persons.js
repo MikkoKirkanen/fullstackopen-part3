@@ -1,22 +1,21 @@
-import axios from "axios";
+import axios from 'axios';
 
-// const baseUrl = "http://localhost:3001/api/persons";
-const baseUrl = "/api/persons";
+const baseUrl = import.meta.env.VITE_BASE_URL || '/api/persons';
 
 const getAll = () => {
-  return axios.get(baseUrl).then(response => response.data);
+  return axios.get(baseUrl).then((res) => res.data);
 };
 
 const create = (newObject) => {
-  return axios.post(baseUrl, newObject).then(response => response.data);
+  return axios.post(baseUrl, newObject).then((res) => res.data);
 };
 
 const remove = (id) => {
-  return axios.delete(`${baseUrl}/${id}`).then(response => response.data);
+  return axios.delete(`${baseUrl}/${id}`).then((res) => res.data);
 };
 
 const update = (updateObject) => {
-  return axios.put(baseUrl, updateObject).then(response => response.data);
+  return axios.put(baseUrl, updateObject).then((res) => res.data);
 };
 
 export default {

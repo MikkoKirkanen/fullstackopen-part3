@@ -1,5 +1,7 @@
+import Table from 'react-bootstrap/Table';
+
 const Persons = ({ personsToShow, remove, edit }) => (
-  <table className="table table-sm table-striped">
+  <Table striped size="sm">
     <tbody>
       {personsToShow?.map((person) => (
         <tr key={person.id}>
@@ -12,7 +14,7 @@ const Persons = ({ personsToShow, remove, edit }) => (
         </tr>
       ))}
     </tbody>
-  </table>
+  </Table>
 );
 
 export default Persons;
