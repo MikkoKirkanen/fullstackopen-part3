@@ -41,7 +41,7 @@ const hasEmptyOrSameNameValues = async (person) => {
     person.id &&
     !persons.find((p) => p._id.toString() === person.id)
   ) {
-    result.messages.push(`${person.name} no found`);
+    result.messages.push(`${person.name} not found`);
     result.hasErrors = true;
     result.status = 404;
   } else if (
