@@ -38,7 +38,7 @@ const App = () => {
         ) {
           data.messages = [
             'Is server running?',
-            'Run `npm start` on backend folder',
+            'Run `npm start` in backend folder',
           ];
         }
         showNotification(data, 'danger', false);

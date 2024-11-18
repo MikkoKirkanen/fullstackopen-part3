@@ -23,139 +23,170 @@ app.use(cors());
 app.use(express.static('dist'));
 
 const trimValues = (person) => {
-  person.name = person.name.trim();
-  person.number = person.number.trim();
+  person.name = person.name?.trim();
+  person.number = person.number?.trim();
 };
 
-const hasEmptyOrSameNameValues = async (person) => {
+const getErrorTitle = (isAdd = true) => {
+  return `Failed to ${isAdd ? 'add' : 'update'} person to phonebook`;
+};
+
+const checkEmptyValues = (person) => {
   trimValues(person);
-  const result = { hasErrors: false, messages: [], status: null };
+  const result = {
+    hasErrors: false,
+    message: null,
+    messages: [],
+    status: null,
+  };
   const noName = !person.name;
   const noNumber = !person.number;
   result.hasErrors = noName || noNumber;
-  const persons = await Person.find({}).then((persons) => persons);
   if (result.hasErrors) {
+    result.status = 400;
+    result.message = getErrorTitle(!person.id);
     noName ? result.messages.push('Name is required') : null;
     noNumber ? result.messages.push('Number is required') : null;
-  } else if (
-    person.id &&
-    !persons.find((p) => p._id.toString() === person.id)
-  ) {
-    result.messages.push(`${person.name} not found`);
-    result.hasErrors = true;
-    result.status = 404;
-  } else if (
-    persons
-      .filter((p) => p._id.toString() !== person?.id)
-      .some((p) => p.name === person?.name)
-  ) {
-    result.messages.push(`${person.name} is already in the phonebook`);
-    result.hasErrors = true;
   }
   return result;
 };
+
+const hasMissingIdOrSameName = async (person) => {
+  const result = { hasErrors: false, messages: [], status: 400 };
+  const persons = await Person.find({});
+  const hasMissingId =
+    person.id && !persons.find((p) => p._id.toString() === person.id);
+  const hasSameNamePerson = persons
+    .filter((p) => p._id.toString() !== person?.id)
+    .some((p) => p.name === person.name);
+  result.hasErrors = hasMissingId || hasSameNamePerson;
+  result.message = result.hasErrors ? getErrorTitle(!person.id) : null;
+  if (hasMissingId) {
+    result.messages.push(`Person ${person.name} not found`);
+    result.status = 404;
+  } else if (hasSameNamePerson) {
+    result.messages.push(`${person.name} is already in the phonebook`);
+  }
+  return result;
+};
+
+// Middleware to check for empty values when add and update
+app.use('/api/persons', (req, res, next) => {
+  const isAddOrUpdateMethod = req.method === 'POST' || req.method === 'PUT';
+  const result = checkEmptyValues(req.body);
+  if (isAddOrUpdateMethod && result.hasErrors) {
+    next(result);
+  } else {
+    next();
+  }
+});
 
 app.get('/test', (_req, res) => {
   res.send(`<h1>Hello World!</h1>`);
 });
 
 app.get('/info', (_req, res) => {
-  res.send(
-    `<p>Phonebook has info for ${persons.length} people</p><p>${new Date()}</p>`
+  Person.find({}).then((persons) =>
+    res.send(
+      `<p>Phonebook has info for ${
+        persons.length
+      } people</p><p>${new Date().toLocaleString()}</p>`
+    )
   );
 });
 
-app.get('/api/persons', (_req, res) => {
+app.get('/api/persons', (_req, res, next) => {
   Person.find({})
     .then((persons) => {
-      res.status(200).json({ persons: persons });
+      next({ status: 200, persons: persons });
     })
     .catch((error) => {
-      res.status(404).json({ message: `Error getting persons: ${error}` });
+      next({ status: 404, message: `Error getting persons: ${error}` });
     });
 });
 
 app.get('/api/persons/:id', async (req, res) => {
   Person.findById(req.params.id)
     .then((result) => {
-      console.log(result);
       res.json(result);
     })
     .catch((error) => {
-      console.log(error);
       res.sendStatus(404);
     });
 });
 
-app.post('/api/persons', async (req, res) => {
-  const newPerson = { ...req.body };
-  const errors = await hasEmptyOrSameNameValues(newPerson);
+app.post('/api/persons', async (req, res, next) => {
+  const newPerson = req.body;
+  const errors = await hasMissingIdOrSameName(newPerson);
   if (errors.hasErrors) {
-    res.status(400).json({
-      message: 'Failed to add person to phonebook',
-      messages: errors.messages,
+    next(errors);
+  } else {
+    const person = new Person({
+      name: newPerson.name,
+      number: newPerson.number,
     });
-    return;
-  }
-  const person = new Person({
-    name: newPerson.name,
-    number: newPerson.number,
-  });
-  person.save().then(() =>
-    res.status(201).json({
-      message: `${newPerson.name} has been successfully added to the phonebook`,
-      person: person,
-    })
-  );
-});
-
-app.put('/api/persons', async (req, res) => {
-  const newData = req.body;
-  const errors = await hasEmptyOrSameNameValues(newData);
-  if (errors.hasErrors) {
-    res.status(errors.status || 400).json({
-      message: 'Person update failed',
-      messages: errors.messages,
-    });
-    return;
-  }
-  Person.findByIdAndUpdate(
-    newData.id,
-    {
-      name: newData.name,
-      number: newData.number,
-    },
-    { new: true }
-  )
-    .then((person) => {
-      res.status(200).json({
-        message: `${person.name} has been updated successfully`,
+    person.save().then(() =>
+      next({
+        status: 201,
+        message: `Person ${newPerson.name} has been successfully added to the phonebook`,
         person: person,
-      });
-    })
-    .catch((error) => {
-      console.log(error);
-    });
+      })
+    );
+  }
 });
 
-app.delete('/api/persons/:id', async (req, res) => {
+app.put('/api/persons', async (req, res, next) => {
+  const person = req.body;
+  const errors = await hasMissingIdOrSameName(person);
+  if (errors.hasErrors) {
+    next(errors);
+  } else {
+    Person.findByIdAndUpdate(
+      person.id,
+      {
+        name: person.name,
+        number: person.number,
+      },
+      { new: true }
+    )
+      .then((person) => {
+        next({
+          message: `Person ${person.name} has been updated successfully`,
+          person: person,
+        });
+      })
+      .catch((error) => {
+        console.log(error);
+      });
+  }
+});
+
+app.delete('/api/persons/:id', async (req, res, next) => {
   const id = req.params.id;
   Person.findByIdAndDelete(id)
-    .then((data) => {
-      if (data) {
-        res.status(200).json({
-          message: `${data.name} has been removed from the phonebook`,
-          person: data,
+    .then((person) => {
+      if (person) {
+        next({
+          message: `Person ${person.name} has been removed from the phonebook`,
+          person: person,
         });
       } else {
-        res.status(404).json({
-          message: 'The person to delete cannot be found',
-        });
+        next({ status: 404, message: 'The person to be deleted cannot be found' });
       }
     })
     .catch((error) => {
       console.log('Delete error', error);
     });
+});
+
+// Middleware for response
+app.use((result, req, res, next) => {
+  res.status(result.status || 200).json({
+    message: result.message,
+    messages: result.messages,
+    person: result.person,
+    persons: result.persons
+  });
 });
 
 const PORT = process.env.PORT || 3001;
