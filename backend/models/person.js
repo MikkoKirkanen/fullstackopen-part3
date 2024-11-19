@@ -1,6 +1,6 @@
-import mongoose from 'mongoose';
+import mongoose from 'mongoose'
 
-mongoose.set('strictQuery', false);
+mongoose.set('strictQuery', false)
 
 const personSchema = new mongoose.Schema({
   name: {
@@ -14,21 +14,21 @@ const personSchema = new mongoose.Schema({
     minlength: [8, 'Number minimum length is 8 characters'],
     validate: {
       validator: (v) => {
-        return /\d{2,3}-\d{7,8}/.test(v);
+        return /\d{2,3}-\d{7,8}/.test(v)
       },
       message: (props) => `${props.value} is not a valid number!`,
     },
   },
-});
+})
 
-const Person = mongoose.model('Person', personSchema);
+const Person = mongoose.model('Person', personSchema)
 
 personSchema.set('toJSON', {
   transform: (doc, ret) => {
-    ret.id = ret._id;
-    delete ret._id;
-    delete ret.__v;
+    ret.id = ret._id
+    delete ret._id
+    delete ret.__v
   },
-});
+})
 
-export default Person;
+export default Person
