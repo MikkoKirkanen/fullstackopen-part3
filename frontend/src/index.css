@@ -15,3 +15,7 @@
 .person-input-table {
   width: 320px;
 }
+
+.number-tooltip .tooltip-inner {
+  max-width: 280px;
+}

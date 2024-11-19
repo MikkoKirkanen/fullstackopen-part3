@@ -103,6 +103,7 @@ const App = () => {
           clear();
         })
         .catch((error) => {
+          console.log(error);
           showNotification(error.response.data, 'danger');
         });
     }

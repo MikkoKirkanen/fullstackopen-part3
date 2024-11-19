@@ -1,4 +1,5 @@
 import Table from 'react-bootstrap/Table';
+import NumberTooltip from './NumberTooltip';
 
 const PersonForm = ({
   submit,
@@ -28,10 +29,10 @@ const PersonForm = ({
           </td>
         </tr>
         <tr>
-          <td className='align-middle w-auto'>
+          <td className='align-middle w-auto pb-0'>
             <label htmlFor='number'>Number</label>
           </td>
-          <td>
+          <td className='pb-0'>
             <input
               id='number'
               name='number'
@@ -40,6 +41,14 @@ const PersonForm = ({
               value={number}
               onChange={onNumberChange}
             />
+          </td>
+          <td className='align-middle fs-3'>
+            <NumberTooltip />
+          </td>
+        </tr>
+        <tr>
+          <td colSpan={2} className='text-secondary small text-end pt-0'>
+            Example 09-12345678 or 044-1234567
           </td>
         </tr>
         <tr>

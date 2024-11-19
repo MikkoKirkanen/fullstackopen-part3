@@ -31,25 +31,25 @@ const getErrorTitle = (isAdd = true) => {
   return `Failed to ${isAdd ? 'add' : 'update'} person to phonebook`;
 };
 
-const checkEmptyValues = (person) => {
-  trimValues(person);
-  const result = {
-    hasErrors: false,
-    message: null,
-    messages: [],
-    status: null,
-  };
-  const noName = !person.name;
-  const noNumber = !person.number;
-  result.hasErrors = noName || noNumber;
-  if (result.hasErrors) {
-    result.status = 400;
-    result.message = getErrorTitle(!person.id);
-    noName ? result.messages.push('Name is required') : null;
-    noNumber ? result.messages.push('Number is required') : null;
-  }
-  return result;
-};
+// const checkEmptyValues = (person) => {
+//   trimValues(person);
+//   const result = {
+//     hasErrors: false,
+//     message: null,
+//     messages: [],
+//     status: null,
+//   };
+//   const noName = !person.name;
+//   const noNumber = !person.number;
+//   result.hasErrors = noName || noNumber;
+//   if (result.hasErrors) {
+//     result.status = 400;
+//     result.message = getErrorTitle(!person.id);
+//     noName ? result.messages.push('Name is required') : null;
+//     noNumber ? result.messages.push('Number is required') : null;
+//   }
+//   return result;
+// };
 
 const hasMissingIdOrSameName = async (person) => {
   const result = { hasErrors: false, messages: [], status: 400 };
@@ -71,15 +71,15 @@ const hasMissingIdOrSameName = async (person) => {
 };
 
 // Middleware to check for empty values when add and update
-app.use('/api/persons', (req, res, next) => {
-  const isAddOrUpdateMethod = req.method === 'POST' || req.method === 'PUT';
-  const result = checkEmptyValues(req.body);
-  if (isAddOrUpdateMethod && result.hasErrors) {
-    next(result);
-  } else {
-    next();
-  }
-});
+// app.use('/api/persons', (req, res, next) => {
+//   const isAddOrUpdateMethod = req.method === 'POST' || req.method === 'PUT';
+//   const result = checkEmptyValues(req.body);
+//   if (isAddOrUpdateMethod && result.hasErrors) {
+//     next(result);
+//   } else {
+//     next();
+//   }
+// });
 
 app.get('/test', (_req, res) => {
   res.send(`<h1>Hello World!</h1>`);
@@ -125,13 +125,19 @@ app.post('/api/persons', async (req, res, next) => {
       name: newPerson.name,
       number: newPerson.number,
     });
-    person.save().then(() =>
-      next({
-        status: 201,
-        message: `Person ${newPerson.name} has been successfully added to the phonebook`,
-        person: person,
-      })
-    );
+    person
+      .save()
+      .then(() =>
+        next({
+          status: 201,
+          message: `Person ${newPerson.name} has been successfully added to the phonebook`,
+          person: person,
+        })
+      )
+      .catch((error) => {
+        const messages = Object.values(error.errors).map((e) => e.message);
+        next({ status: 400, message: error._message, messages: messages });
+      });
   }
 });
 
@@ -147,16 +153,17 @@ app.put('/api/persons', async (req, res, next) => {
         name: person.name,
         number: person.number,
       },
-      { new: true }
+      { new: true, runValidators: true }
     )
       .then((person) => {
         next({
-          message: `Person ${person.name} has been updated successfully`,
+          message: `Person "${person.name}" has been updated successfully`,
           person: person,
         });
       })
       .catch((error) => {
-        console.log(error);
+        const messages = Object.values(error.errors).map((e) => e.message);
+        next({ status: 400, message: error._message, messages: messages });
       });
   }
 });
@@ -167,11 +174,15 @@ app.delete('/api/persons/:id', async (req, res, next) => {
     .then((person) => {
       if (person) {
         next({
-          message: `Person ${person.name} has been removed from the phonebook`,
+          message: `Person "${person.name}" is removed from the phonebook`,
           person: person,
         });
       } else {
-        next({ status: 404, message: 'The person to be deleted cannot be found' });
+        next({
+          status: 404,
+          message: 'Person to be deleted cannot be found',
+          messages: ['Person is removed from the list']
+        });
       }
     })
     .catch((error) => {
@@ -185,7 +196,8 @@ app.use((result, req, res, next) => {
     message: result.message,
     messages: result.messages,
     person: result.person,
-    persons: result.persons
+    persons: result.persons,
+    error: result.error,
   });
 });
 
